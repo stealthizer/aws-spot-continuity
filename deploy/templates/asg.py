@@ -46,6 +46,7 @@ class asgSpotContinuity(object):
         self.add_cpu_usage_alarm_ondemand_low()
         self.add_cpu_credit_balance_ondemand_low()
         self.add_iam_role()
+        self.add_loadbalancer_output()
 
 
     def add_template(self):
@@ -328,7 +329,7 @@ class asgSpotContinuity(object):
             ],
             Statistic="Average",
             Period="300",
-            EvaluationPeriods="1",
+            EvaluationPeriods="2",
             Threshold="5",
             ComparisonOperator="LessThanThreshold",
             AlarmActions=[Ref(self.scalingPolicySpotDown)]
@@ -368,7 +369,7 @@ class asgSpotContinuity(object):
             ],
             Statistic="Average",
             Period="300",
-            EvaluationPeriods="1",
+            EvaluationPeriods="2",
             Threshold="60",
             ComparisonOperator="GreaterThanOrEqualToThreshold",
             AlarmActions=[Ref(self.scalingPolicyOndemandUp)]
@@ -408,18 +409,18 @@ class asgSpotContinuity(object):
             ],
             Statistic="Average",
             Period="60",
-            EvaluationPeriods="5",
+            EvaluationPeriods="10",
             Threshold="10",
             ComparisonOperator="LessThanThreshold",
             AlarmActions=[Ref(self.scalingPolicyOndemandUp)]
         ))
 
     def add_loadbalancer_output(self):
-        self.LoadbalancerDnsOutput = Output(
-            "DistilBalancerDNSName",
+        self.LoadbalancerDnsOutput = self.template.add_output(Output(
+            "LoadBalancerDNSName",
             Description="DNSName of the LoadBalancer",
-            Value=GetAtt("LoadBalancer", "DNSName")
-        )
+            Value=Join("", ["http://", GetAtt(self.LoadBalancer, "DNSName")])
+        ))
 
 def sceptre_handler(sceptre_user_data):
     sceptre = asgSpotContinuity(sceptre_user_data)

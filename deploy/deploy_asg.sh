@@ -5,5 +5,5 @@ else
     profile=$1
     export AWS_PROFILE=$profile
     environment=`echo $profile|cut -d- -f2`
-    sceptre update-stack $environment asg
+    sceptre create-stack $environment asg
 fi
