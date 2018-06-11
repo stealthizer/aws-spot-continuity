@@ -1,0 +1,14 @@
+template_path: templates/asg.py
+sceptre_user_data:
+  env: dev
+  profile: dev
+  keyname: devops
+  instance_type: t2.micro
+  spot_price: "0.006"
+  region: eu-west-1
+  desired_capacity_ondemand: 0
+  minimum_capacity_ondemand: 0
+  maximum_capacity_ondemand: 3
+  desired_capacity_spot: 1
+  minimum_capacity_spot: 1
+  maximum_capacity_spot: 3
