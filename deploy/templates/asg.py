@@ -25,6 +25,7 @@ class asgSpotContinuity(object):
         self.keyname = self.sceptre_user_data["keyname"]
         self.instance_type = self.sceptre_user_data["instance_type"]
         self.spot_price=self.sceptre_user_data["spot_price"]
+        self.IamInstanceProfile = "devops"
         self.subnets = ec2Connection.get_available_subnets(self.VpcId)
         self.Azs = GetAZs("")
         self.add_template()
@@ -126,13 +127,16 @@ class asgSpotContinuity(object):
             }]},
             Policies=[
                 iam.Policy(
-                    PolicyName="DynamoDBaccess",
+                    PolicyName="Ec2Access",
                     PolicyDocument={
                         "Statement": [{
                             "Effect": "Allow",
-                            "Action": "dynamodb:*",
-                            "Resource": "arn:aws:dynamodb:eu-west-1:" + self.account_id + ":table/sgm-config",
-                        }],
+                            "Action": [
+                                "ec2:DescribeInstances"
+                            ],
+                            "Resource": "*"
+                        }
+                        ],
                     }
                 )
             ]
@@ -156,10 +160,11 @@ class asgSpotContinuity(object):
                 "    --stack ", Ref("AWS::StackName"),
                 "    --region ", Ref("AWS::Region"), "\n",
                 "yum -y install docker htop stress && service docker start\n",
-                "docker run -d -p 80:80 httpd\n"
+                "docker run -d -p 80:8080 stealthizer/docker-aws-info\n"
             ])),
             ImageId=self.amiId,
             KeyName=self.keyname,
+            IamInstanceProfile=Ref("InstanceProfile"),
             BlockDeviceMappings=[
                 ec2.BlockDeviceMapping(
                     DeviceName="/dev/xvda",
@@ -182,11 +187,12 @@ class asgSpotContinuity(object):
                 "    --stack ", Ref("AWS::StackName"),
                 "    --region ", Ref("AWS::Region"), "\n",
                 "yum -y install docker htop stress && service docker start\n",
-                "docker run -d -p 80:80 httpd\n"
+                "docker run -d -p 80:8080 stealthizer/docker-aws-info\n"
             ])),
             ImageId=self.amiId,
             KeyName=self.keyname,
             SpotPrice=self.spot_price,
+            IamInstanceProfile=Ref("InstanceProfile"),
             BlockDeviceMappings=[
                 ec2.BlockDeviceMapping(
                     DeviceName="/dev/xvda",
@@ -211,8 +217,8 @@ class asgSpotContinuity(object):
                 Target="HTTP:80/",
                 HealthyThreshold="5",
                 UnhealthyThreshold="2",
-                Interval="20",
-                Timeout="15",
+                Interval="5",
+                Timeout="4",
             ),
             Listeners=[
                 elasticloadbalancing.Listener(
