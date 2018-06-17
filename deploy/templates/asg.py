@@ -24,8 +24,9 @@ class asgSpotContinuity(object):
         self.account_id = stsConnection.get_account_id()
         self.keyname = self.sceptre_user_data["keyname"]
         self.instance_type = self.sceptre_user_data["instance_type"]
-        self.spot_price=self.sceptre_user_data["spot_price"]
-        self.IamInstanceProfile = "devops"
+        self.spot_price = self.sceptre_user_data["spot_price"]
+        self.region = self.sceptre_user_data["region"]
+        self.service_tag = "web-demo"
         self.subnets = ec2Connection.get_available_subnets(self.VpcId)
         self.Azs = GetAZs("")
         self.add_template()
@@ -138,6 +139,19 @@ class asgSpotContinuity(object):
                         }
                         ],
                     }
+                ),
+                iam.Policy(
+                    PolicyName="DynamoDB",
+                    PolicyDocument={
+                        "Statement": [{
+                            "Effect": "Allow",
+                            "Action": "dynamodb:*",
+                            "Resource": "arn:aws:dynamodb:" + self.region + ":" + self.account_id + ":table/terminateDB"
+                        }
+                        ]
+
+                    }
+
                 )
             ]
         )
@@ -215,7 +229,7 @@ class asgSpotContinuity(object):
                 Subnets=self.subnets,
                 HealthCheck=elasticloadbalancing.HealthCheck(
                 Target="HTTP:80/",
-                HealthyThreshold="5",
+                HealthyThreshold="2",
                 UnhealthyThreshold="2",
                 Interval="5",
                 Timeout="4",
@@ -246,7 +260,9 @@ class asgSpotContinuity(object):
             AvailabilityZones=GetAZs(""),
             HealthCheckType="ELB",
             HealthCheckGracePeriod=10,
-            Tags=[autoscaling.Tag("Name", "demo-server-ondemand", True)]
+            Tags=[autoscaling.Tag("Name", "web-server-ondemand", True),
+                  autoscaling.Tag("service", self.service_tag, True),
+                  autoscaling.Tag("lifecycle", "ondemand", True)]
         ))
 
     def add_autoscaling_spot(self):
@@ -262,7 +278,9 @@ class asgSpotContinuity(object):
             HealthCheckType="ELB",
             HealthCheckGracePeriod=10,
             MetricsCollection=[],
-            Tags=[autoscaling.Tag("Name", "demo-server-spot", True)]
+            Tags=[autoscaling.Tag("Name", "web-server-spot", True),
+                  autoscaling.Tag("service", self.service_tag, True),
+                  autoscaling.Tag("lifecycle", "spot", True)]
         ))
 
     def add_scaling_policy_spot_up(self):

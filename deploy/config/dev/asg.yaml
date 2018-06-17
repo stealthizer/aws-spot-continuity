@@ -4,7 +4,7 @@ sceptre_user_data:
   profile: dev
   keyname: devops
   instance_type: t2.micro
-  spot_price: "0.006"
+  spot_price: "0.0038"
   region: eu-west-1
   desired_capacity_ondemand: 0
   minimum_capacity_ondemand: 0
